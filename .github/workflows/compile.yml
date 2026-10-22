@@ -7,10 +7,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Wir nageln das System fest, damit neuere Linux-Updates den Compiler nicht verwirren
+    runs-on: ubuntu-24.04
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install System Dependencies
       run: |
@@ -19,28 +20,22 @@ jobs:
 
     - name: Download Pre-compiled PS5 Payload SDK
       run: |
-        # Vorkompiliertes SDK von den offiziellen Entwicklern laden
-        wget https://github.com/ps5-payload-dev/sdk/releases/latest/download/ps5-payload-sdk.zip
-        
-        # In einen temporären Ordner entpacken, um den genauen Ordnernamen abzufangen
+        wget https://github.com
         mkdir -p /tmp/sdk-extract
         unzip ps5-payload-sdk.zip -d /tmp/sdk-extract
-        
-        # Den extrahierten SDK-Ordner sauber nach /opt verschieben
         sudo mv /tmp/sdk-extract/* /opt/ps5-payload-sdk
         
-        # Pfade für die Linux-Umgebung registrieren
         echo "PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk" >> $GITHUB_ENV
         echo "PS5SDK=/opt/ps5-payload-sdk" >> $GITHUB_ENV
         echo "/opt/ps5-payload-sdk/toolchain/bin" >> $GITHUB_PATH
 
     - name: Compile Payload
       run: |
-        # Kompilierungs-Befehl ausführen
         make PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
 
     - name: Upload Finished ELF
-      uses: actions/upload-artifact@v3
+      # Hier nutzen wir jetzt das brandneue v4 Tool, um die GitHub-Sperre auszuhebeln
+      uses: actions/upload-artifact@v4
       with:
         name: PS5-Homebutton-Payload
         path: homebutton_trigger.elf
