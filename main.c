@@ -1,30 +1,34 @@
-#include <stdio.h>
-#include <unistd.h>
+name: PS5 ELF Compiler
 
-// Deklaration der exakten, kleingeschriebenen PS5-Systemfunktionen
-extern int sceShellUtilInit(void);
-extern int sceShellUtilActivateHomeMenu(void);
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
 
-int main() {
-    // Initialisiert das Shell-Subsystem der PS5
-    sceShellUtilInit();
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
-    // Die Payload bleibt permanent als Hintergrund-Prozess aktiv
-    while (1) {
-        
-        // Wir nutzen einen unschädlichen, passiven Timer:
-        // Da die PS5 nach dem Aufwachen exakt 5 Sekunden braucht, 
-        // bis das Netzwerk steht, schlafen wir hier. In dieser Zeit 
-        // ueberschreibt dein Pi die app.db via FTP im laufenden Betrieb.
-        sleep(5);
+    steps:
+    - uses: actions/checkout@v4
 
-        // Nativer "Homebutton-Druck" ueber das PS5-Betriebssystem.
-        // Das zwingt das Kachel-UI live zum Neueinlesen der app.db!
-        sceShellUtilActivateHomeMenu(); 
+    - name: Install Compiler
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-18 lld-18 build-essential
 
-        // 10 Sekunden schlafen, um doppeltes Feuern beim Aufwachen zu verhindern
-        sleep(10);
-    }
+    - name: Direct Compile Without SDK Overhead
+      run: |
+        # Wir backen die ELF-Datei direkt ueber Clang als stand-alone Payload fuer die PS5
+        clang-18 -target x86_64-scei-ps4 -O2 -static -nostdlib \
+          -Wl,--preserve-dates \
+          -fuse-ld=lld-18 \
+          main.c -o homebutton_trigger.elf
 
-    return 0;
-}
+    - name: Upload Finished ELF
+      uses: actions/upload-artifact@v4
+      with:
+        name: PS5-Homebutton-Payload
+        path: homebutton_trigger.elf
