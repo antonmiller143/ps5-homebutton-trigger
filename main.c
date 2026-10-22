@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-// Direkte System-Deklarationen fuer die PS5-Shell ohne SDK-Header-Abhaengigkeiten
+// Deklaration der exakten, kleingeschriebenen PS5-Systemfunktionen
 extern int sceShellUtilInit(void);
-extern int SceShellUtilActivateHomeMenu(void);
+extern int sceShellUtilActivateHomeMenu(void);
 
 int main() {
     // Initialisiert das Shell-Subsystem der PS5
@@ -20,7 +20,7 @@ int main() {
 
         // Nativer "Homebutton-Druck" ueber das PS5-Betriebssystem.
         // Das zwingt das Kachel-UI live zum Neueinlesen der app.db!
-        SceShellUtilActivateHomeMenu(); 
+        sceShellUtilActivateHomeMenu(); 
 
         // 10 Sekunden schlafen, um doppeltes Feuern beim Aufwachen zu verhindern
         sleep(10);
