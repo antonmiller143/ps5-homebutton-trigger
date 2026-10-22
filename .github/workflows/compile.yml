@@ -7,8 +7,10 @@ on:
 
 jobs:
   build:
-    # Wir nageln das System fest, damit neuere Linux-Updates den Compiler nicht verwirren
     runs-on: ubuntu-24.04
+    env:
+      # Erlaubt die Ausführung auf den aktuellen GitHub-Servern ohne Node-Sperre
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
     steps:
     - uses: actions/checkout@v4
@@ -34,7 +36,6 @@ jobs:
         make PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
 
     - name: Upload Finished ELF
-      # Hier nutzen wir jetzt das brandneue v4 Tool, um die GitHub-Sperre auszuhebeln
       uses: actions/upload-artifact@v4
       with:
         name: PS5-Homebutton-Payload
