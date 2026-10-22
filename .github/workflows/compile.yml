@@ -19,18 +19,25 @@ jobs:
 
     - name: Download Pre-compiled PS5 Payload SDK
       run: |
-        # Lädt die offizielle, fertige Version des SDK herunter
+        # Vorkompiliertes SDK von den offiziellen Entwicklern laden
         wget https://github.com/ps5-payload-dev/sdk/releases/latest/download/ps5-payload-sdk.zip
-        sudo unzip -d /opt ps5-payload-sdk.zip
         
-        # Setzt die Umgebungsvariablen für das Makefile
+        # In einen temporären Ordner entpacken, um den genauen Ordnernamen abzufangen
+        mkdir -p /tmp/sdk-extract
+        unzip ps5-payload-sdk.zip -d /tmp/sdk-extract
+        
+        # Den extrahierten SDK-Ordner sauber nach /opt verschieben
+        sudo mv /tmp/sdk-extract/* /opt/ps5-payload-sdk
+        
+        # Pfade für die Linux-Umgebung registrieren
         echo "PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk" >> $GITHUB_ENV
         echo "PS5SDK=/opt/ps5-payload-sdk" >> $GITHUB_ENV
         echo "/opt/ps5-payload-sdk/toolchain/bin" >> $GITHUB_PATH
 
     - name: Compile Payload
       run: |
-        make
+        # Kompilierungs-Befehl ausführen
+        make PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
 
     - name: Upload Finished ELF
       uses: actions/upload-artifact@v3
