@@ -15,19 +15,21 @@ jobs:
     - name: Install System Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y wget cmake ninja-build build-essential python3 python3-pyelftools clang-18 lld-18
+        sudo apt-get install -y wget unzip clang-18 lld-18 build-essential python3 python3-pyelftools
 
-    - name: Install PS5 Payload SDK
+    - name: Download Pre-compiled PS5 Payload SDK
       run: |
-        git clone https://github.com/ps5-payload-dev/sdk.git ps5-payload-sdk
-        cd ps5-payload-sdk
-        make
-        echo "PS5SDK=$GITHUB_WORKSPACE/ps5-payload-sdk" >> $GITHUB_ENV
-        echo "$GITHUB_WORKSPACE/ps5-payload-sdk/toolchain/bin" >> $GITHUB_PATH
+        # Lädt die offizielle, fertige Version des SDK herunter
+        wget https://github.com/ps5-payload-dev/sdk/releases/latest/download/ps5-payload-sdk.zip
+        sudo unzip -d /opt ps5-payload-sdk.zip
+        
+        # Setzt die Umgebungsvariablen für das Makefile
+        echo "PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk" >> $GITHUB_ENV
+        echo "PS5SDK=/opt/ps5-payload-sdk" >> $GITHUB_ENV
+        echo "/opt/ps5-payload-sdk/toolchain/bin" >> $GITHUB_PATH
 
     - name: Compile Payload
       run: |
-        export PS5_PAYLOAD_SDK=$GITHUB_WORKSPACE/ps5-payload-sdk
         make
 
     - name: Upload Finished ELF
