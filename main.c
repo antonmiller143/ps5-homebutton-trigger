@@ -1,34 +1,29 @@
-name: PS5 ELF Compiler
+// Wir deklarieren die PS5-Systemfunktion manuell als nacktes Symbol
+extern int sceShellUtilActivateHomeMenu(void);
 
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
+// Eine eigene, reine Hardware-Warteschleife ueber die CPU-Zyklen der PS5
+// Verhindert die Abhaengigkeit von "sleep()" oder externen Bibliotheken
+void hardware_delay(unsigned int loops) {
+    volatile unsigned int i;
+    for (i = 0; i < loops; i++) {
+        __asm__ volatile("nop"); // Nackter CPU-Leerlaufbefehl
+    }
+}
 
-jobs:
-  build:
-    runs-on: ubuntu-24.04
-    env:
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+int main() {
+    // Endlosschleife, damit die Payload dauerhaft im Hintergrund-RAM verweilt
+    while (1) {
+        
+        // 1. Wartezeit (entspricht ca. 5-8 Sekunden auf der PS5 CPU-Architektur)
+        // In diesem Zeitfenster schiebt dein Pi die app.db via FTP rueber
+        hardware_delay(90000000);
 
-    steps:
-    - uses: actions/checkout@v4
+        // 2. Den nackten UI-Refresh an die PS5 senden
+        sceShellUtilActivateHomeMenu(); 
 
-    - name: Install Compiler
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y clang-18 lld-18 build-essential
+        // 3. Sicherheits-Verzoegerung, um mehrfaches Feuern beim Aufwachen zu verhindern
+        hardware_delay(150000000);
+    }
 
-    - name: Direct Compile Without SDK Overhead
-      run: |
-        # Wir backen die ELF-Datei direkt ueber Clang als stand-alone Payload fuer die PS5
-        clang-18 -target x86_64-scei-ps4 -O2 -static -nostdlib \
-          -Wl,--preserve-dates \
-          -fuse-ld=lld-18 \
-          main.c -o homebutton_trigger.elf
-
-    - name: Upload Finished ELF
-      uses: actions/upload-artifact@v4
-      with:
-        name: PS5-Homebutton-Payload
-        path: homebutton_trigger.elf
+    return 0;
+}
